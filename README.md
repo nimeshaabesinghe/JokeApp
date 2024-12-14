@@ -1,16 +1,12 @@
-# chat_app
+# Joke App
 
-A new Flutter project.
+A simple Flutter application that fetches and displays programming jokes.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+- Fetch random jokes from an API
+- Display jokes in a user-friendly interface
+- Gradient background
+- Display cached jokes when offline
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+  
