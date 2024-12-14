@@ -5,7 +5,7 @@ class JokeService {
 
   Future<List<Map<String, dynamic>>> fetchJokesRaw() async {
     try {
-      final response = await _dio.get('https://v2.jokeapi.dev/joke/Any?amount=3&blacklistFlags=nsfw');
+      final response = await _dio.get('https://v2.jokeapi.dev/joke/Any?amount=5&blacklistFlags=nsfw');
       if (response.statusCode == 200) {
         final List<dynamic> jokesJsonList = response.data['jokes'];
         return jokesJsonList.cast<Map<String, dynamic>>();
