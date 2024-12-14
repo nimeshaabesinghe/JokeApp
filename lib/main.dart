@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'joke_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 void main() {
   runApp(MyApp());
@@ -19,7 +21,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-
 class JokeListPage extends StatefulWidget {
   const JokeListPage({Key? key}) : super(key: key);
 
@@ -32,6 +33,12 @@ class _JokeListPageState extends State<JokeListPage> {
   List<Map<String, dynamic>> _jokesRaw = [];
   bool _isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadCachedJokes();
+  }
+
   Future<void> _fetchJokes() async {
     setState(() {
       _isLoading = true;
@@ -40,8 +47,9 @@ class _JokeListPageState extends State<JokeListPage> {
     try {
       final jokes = await _jokeService.fetchJokesRaw();
       setState(() {
-        _jokesRaw = jokes;
+        _jokesRaw = jokes.length >= 5 ? jokes.take(5).toList() : jokes;
       });
+      await _cacheJokes(_jokesRaw); // Cache the fetched jokes
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to fetch jokes: $e')),
@@ -53,6 +61,22 @@ class _JokeListPageState extends State<JokeListPage> {
     }
   }
 
+  Future<void> _loadCachedJokes() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? jokesJson = prefs.getString('cached_jokes');
+
+    if (jokesJson != null) {
+      setState(() {
+        _jokesRaw = List<Map<String, dynamic>>.from(json.decode(jokesJson));
+      });
+    }
+  }
+
+  Future<void> _cacheJokes(List<Map<String, dynamic>> jokes) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String jokesJson = json.encode(jokes);
+    await prefs.setString('cached_jokes', jokesJson);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,25 +85,21 @@ class _JokeListPageState extends State<JokeListPage> {
         title: const Text('Joke App'),
       ),
       body: Container(
-        padding: const EdgeInsets.fromLTRB(16.0,64.0,16.0,16.0),
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment(0.8, 1),
-              colors: <Color>[
-                Color(0xff870160),
-                Color(0xffca485c),
-                Color(0xffe16b5c),
-                Color(0xffffb56b),
-              ],
-              tileMode: TileMode.mirror,
-            ),
+        padding: const EdgeInsets.fromLTRB(16.0, 64.0, 16.0, 16.0),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment(0.8, 1),
+            colors: <Color>[
+              Color(0xff870160),
+              Color(0xffca485c),
+              Color(0xffe16b5c),
+              Color(0xffffb56b),
+            ],
+            tileMode: TileMode.mirror,
           ),
-        alignment: Alignment.topCenter,
-
+        ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
               'Welcome!',
@@ -90,25 +110,29 @@ class _JokeListPageState extends State<JokeListPage> {
                 fontSize: 40,
               ),
             ),
-            const SizedBox(height: 16.0,),
+            const SizedBox(height: 16.0),
             Icon(Icons.face_2_sharp, size: 50.0, color: Colors.blue),
-            const SizedBox(height: 16.0,),
+            const SizedBox(height: 16.0),
             Text(
               'Enjoy a collection of fun jokes to brighten your day.',
-              style: Theme.of(context).textTheme.bodyLarge!.copyWith(color: Colors.white, fontStyle: FontStyle.italic),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyLarge!
+                  .copyWith(color: Colors.white, fontStyle: FontStyle.italic),
             ),
-            const SizedBox(height: 28.0,),
+            const SizedBox(height: 28.0),
             ElevatedButton(
               onPressed: _isLoading ? null : _fetchJokes,
               child: const Text(
                 'Get Jokes',
                 style: TextStyle(fontSize: 20),
-
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.cyan,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
                 padding: const EdgeInsets.all(16.0),
                 elevation: 10,
               ),
@@ -149,7 +173,9 @@ class _JokeListPageState extends State<JokeListPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          joke['type'] == 'single' ? 'Single Joke' : joke['category'],
+                          joke['type'] == 'single'
+                              ? 'Single Joke'
+                              : joke['category'],
                           style: Theme.of(context)
                               .textTheme
                               .titleLarge!
@@ -163,7 +189,8 @@ class _JokeListPageState extends State<JokeListPage> {
                           joke['type'] == 'single'
                               ? joke['joke']
                               : '${joke['setup']}\n\n${joke['delivery']}',
-                          style: const TextStyle(fontSize: 16.0, color: Colors.black87),
+                          style: const TextStyle(
+                              fontSize: 16.0, color: Colors.black87),
                         ),
                       ],
                     ),
@@ -172,8 +199,8 @@ class _JokeListPageState extends State<JokeListPage> {
               ),
             )
           ],
-        )
-      )
+        ),
+      ),
     );
   }
 }
